@@ -35,7 +35,7 @@ def update_server(request):
 
 	    git_pull()
 
-	    return HttpResponse('Webhook reached.')
+	    return HttpResponse('Webhook reached and update pulled.')
 
 	return HttpResponse('Done.')
 
@@ -55,4 +55,4 @@ def git_pull():
 	repo = git.Repo(path)
 	origin = repo.remotes.origin
 
-	pull_info = origin.pull()
+	origin.pull()
