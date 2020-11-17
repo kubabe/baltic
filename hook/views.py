@@ -9,13 +9,15 @@ import hashlib
 from dotenv import load_dotenv
 load_dotenv()
 
+import git
+
 ### Github integration
 
 @require_POST
 @csrf_exempt
 def update_server(request):
 
-    # Verify the request signature
+    #Verify the request signature
 
 	w_secret = os.environ['WEBHOOK_SECRET']
 	x_hub_signature = request.headers.get('X-Hub-Signature')
@@ -31,7 +33,11 @@ def update_server(request):
 	elif is_valid_signature(x_hub_signature, request.body, w_secret):
 	    print('Deploy signature worked')
 
+	    git_pull()
+
 	    return HttpResponse('Webhook reached.')
+
+	return HttpResponse('Done.')
 
 def is_valid_signature(x_hub_signature, body, private_key):
 
@@ -41,3 +47,12 @@ def is_valid_signature(x_hub_signature, body, private_key):
     mac = hmac.new(encoded_key, msg=body, digestmod=algorithm)
 
     return hmac.compare_digest(mac.hexdigest(), github_signature)
+
+def git_pull():
+
+	path = os.getcwd()
+	print(path)
+	repo = git.Repo(path)
+	origin = repo.remotes.origin
+
+	pull_info = origin.pull()
