@@ -1,35 +1,43 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+#from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
+import os
+import hmac
+import hashlib
+from dotenv import load_dotenv
+load_dotenv()
+
+### Github integration
+
+@require_POST
 @csrf_exempt
 def update_server(request):
-	print('Call happened')
 
-	request = pretty_request(request)
+    # Verify the request signature
 
-	print(request)
+	w_secret = os.environ['WEBHOOK_SECRET']
+	x_hub_signature = request.headers.get('X-Hub-Signature')
 
-	return HttpResponse('ok')
+	if x_hub_signature is None:
+	    print('Permission denied.')
+	    return HttpResponseForbidden('Permission denied.')
 
-def pretty_request(request):
-    headers = ''
-    for header, value in request.META.items():
-        if not header.startswith('HTTP'):
-            continue
-        header = '-'.join([h.capitalize() for h in header[5:].lower().split('_')])
-        headers += '{}: {}\n'.format(header, value)
+	elif not is_valid_signature(x_hub_signature, request.body, w_secret):
+	    print('Deploy signature failed.')
+	    return HttpResponse('Unauthorized secret key.', status=401)
 
-    return (
-        '{method} HTTP/1.1\n'
-        'Content-Length: {content_length}\n'
-        'Content-Type: {content_type}\n'
-        '{headers}\n\n'
-        '{body}'
-    ).format(
-        method=request.method,
-        content_length=request.META['CONTENT_LENGTH'],
-        content_type=request.META['CONTENT_TYPE'],
-        headers=headers,
-        body=request.body,
-    )
+	elif is_valid_signature(x_hub_signature, request.body, w_secret):
+	    print('Deploy signature worked')
+
+	    return HttpResponse('Webhook reached.')
+
+def is_valid_signature(x_hub_signature, body, private_key):
+
+    hash_algorithm, github_signature = x_hub_signature.split('=', 1)
+    algorithm = hashlib.__dict__.get(hash_algorithm)
+    encoded_key = bytes(private_key, 'latin-1')
+    mac = hmac.new(encoded_key, msg=body, digestmod=algorithm)
+
+    return hmac.compare_digest(mac.hexdigest(), github_signature)
