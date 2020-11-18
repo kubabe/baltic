@@ -15,7 +15,7 @@ import sys
 
 ### Github integration
 
-#@require_POST
+@require_POST
 @csrf_exempt
 def update_server(request):
 
