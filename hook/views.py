@@ -23,6 +23,7 @@ def update_server(request):
 
 	w_secret = os.environ['WEBHOOK_SECRET']
 	requirements_command = os.environ['BASH_REQ_COMMAND']
+	staticfiles_command = os.environ['BASH_STA_COMMAND']
 	reload_command = os.environ['BASH_REL_COMMAND']
 	x_hub_signature = request.headers.get('X-Hub-Signature')
 
@@ -46,6 +47,8 @@ def update_server(request):
 	#Install new requirements from requirements.txt (WATCH OUT this command is heavily hard-coded)
 
 	    subprocess.check_call(requirements_command, shell=True, executable='/bin/bash')
+
+	    subprocess.check_call(staticfiles_command, shell=True, executable='/bin/bash')
 
 	    subprocess.check_call(reload_command, shell=True, executable='/bin/bash')
 
