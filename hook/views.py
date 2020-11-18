@@ -17,7 +17,7 @@ import sys
 
 #@require_POST
 @csrf_exempt
-def update_sever(request):
+def update_server(request):
 
     #Load non-public variables
 
